@@ -19,9 +19,9 @@ Modeling the time-varying volatility and conditional correlation between NVIDIA 
 - [Dataset](#dataset)
 - [Exploratory Analysis](#exploratory-analysis)
 - [Modeling](#modeling)
-- [Forecasting](#forecasting)
-- [Results](#results)
 - [Diagnostics](#diagnostics)
+- [Results](#results)
+- [Forecasting](#forecasting)
 - [Conclusion](#conclusion)
 - [Files](#project-files)
 
@@ -58,50 +58,72 @@ This project investigates how NVIDIA stock returns co-move with the S&P 500 inde
 
 ## 🔍 Exploratory Analysis
 
-- **ADF & KPSS tests** confirmed both return series are stationary  
-- **Jarque-Bera tests** rejected normality for both series  
-- NVDA showed more **volatility clustering**, especially **after 2020**  
-- **Rolling correlation** plots revealed changing co-movement:  
-  - Relatively low/stable before 2020  
-  - Marked increase and fluctuations in correlation after 2020
+- **ADF & KPSS tests** confirm both return series are stationary  
+- **Jarque-Bera tests** reject normality  
+- **Rolling correlation** shows rising correlation after 2020  
+- **NVDA** becomes more volatile and market-coupled in recent years  
+- **ACF/PACF** of squared returns indicate presence of ARCH effects:
+  - NVDA: significant at lags 1, 7, 8  
+  - GSPC: strong spikes at lags 1, 2, 4, 6–9  
+  → Suggest using GARCH-type models
 
 ---
 
 ## ⚙️ Modeling
 
-### 🔹 ACF/PACF: Model Order Selection
-
-We used ACF and PACF plots of squared returns to guide model choice:
-
-- NVDA showed significant lags at 1, 7, 8  
-- GSPC had sustained spikes at 1, 2, 4, 6–9  
-- Suggests ARCH effects over multiple lags
-
 ### 🔹 GARCH(0,5): Baseline
 
-To test for short-term volatility clustering, we fit a **GARCH(0,5)** model:
+We begin with a **GARCH(0,5)** model to capture short-term memory in volatility. ARCH LM tests confirm the presence of conditional heteroskedasticity. The sum of ARCH coefficients:
 
-- **ARCH LM test (lags=5)** strongly rejected the null of no ARCH  
-- **Sum of α₁ to α₅**:
-  - NVDA: 0.610 → moderate memory
-  - GSPC: 0.789 → high persistence
+- NVDA: **0.610**
+- GSPC: **0.789**
 
-### 🔹 GARCH(1,1): Main Univariate Model
+This suggests high persistence in volatility shocks.
 
-Then we fit **sGARCH(1,1)** models:
+### 🔹 GARCH(1,1): Simpler and More Interpretable
 
-- Captures both short-term shocks (α₁) and long-term memory (β₁)
-- **Alpha + Beta**:
-  - NVDA: 0.957
-  - GSPC: 0.962
+We switch to **GARCH(1,1)** for parsimony and broader comparability. It captures both short-term shocks (α₁) and long-term persistence (β₁). The model performs well in capturing volatility clustering.
 
-### 🔹 DCC-GARCH(1,1)
+### 🔹 DCC-GARCH(1,1): Modeling Co-Movement
 
-Finally, we used the univariate GARCH models as inputs to a **DCC(1,1)** model:
+Using the fitted univariate GARCH(1,1) models, we estimate a **DCC-GARCH(1,1)** to model dynamic conditional correlation between NVDA and the S&P 500.
 
-- Captures dynamic conditional correlation  
-- **DCC Alpha + Beta = 0.742**  
-- Allows modeling of time-varying dependence between the assets
+---
+
+## 🧪 Diagnostics
+
+### 🔹 Residual Checks
+
+- **Ljung-Box (Q)**: No autocorrelation in standardized residuals  
+- **ARCH-LM**: No remaining ARCH effects after GARCH fit  
+- **Jarque-Bera**: Residuals remain non-normal  
+- **Nyblom Stability Test**:
+  - GSPC borderline unstable (Joint Stat = 8.63 > 1.6 critical)
+
+### 🔹 Sign Bias Test
+
+Used to detect **volatility asymmetry**:
+
+| Metric                 | NVDA        | GSPC        |
+|------------------------|-------------|-------------|
+| Sign Bias              | p = 0.158   | p = 0.0002  |
+| Negative Sign Bias     | p = 0.675   | p = 0.756   |
+| Positive Sign Bias     | p = 0.683   | p = 0.858   |
+| **Joint Effect**       | **p = 0.086** | **p = 3e-5** |
+
+- **NVDA**: marginal asymmetry  
+- **GSPC**: strong asymmetry → consider EGARCH/GJR in future work
+
+---
+
+## ✅ Results
+
+- **Persistence**:  
+  - NVDA α+β = **0.957**  
+  - GSPC α+β = **0.962**  
+- **DCC α+β = 0.742** → dynamic correlations evolve but are moderately persistent  
+- **Avg correlation ≈ 0.57**, trending upward post-2020  
+- NVDA has become more market-coupled in recent years
 
 ---
 
@@ -109,71 +131,34 @@ Finally, we used the univariate GARCH models as inputs to a **DCC(1,1)** model:
 
 <img src="https://github.com/eledon/Dynamic-Volatility-and-Correlation-Modeling-of-NVDA-and-the-S-P-500/blob/main/readme_plots/DCC_GARCH_forecast.jpg" width="700"/>
 
-We produced **100-step-ahead forecasts** of conditional **covariance and correlation** using the fitted DCC-GARCH model.
+We produced **100-step-ahead forecasts** of conditional covariance and correlation between NVDA and GSPC using the DCC-GARCH model.
 
-🟥 **Red vertical line** marks the start of forecast.  
-🔵 **Flat forecast line**: Because DCC-GARCH is a **mean-reverting model**, it forecasts the future conditional correlation and volatility based on the current state, assuming no new information.
-
----
-
-## ✅ Results
-
-- **High Persistence**:  
-  - NVDA α+β = 0.957  
-  - GSPC α+β = 0.962  
-- **Dynamic Correlation**:  
-  - DCC α+β = 0.742  
-  - Average correlation ≈ **0.57**, increasing after 2020  
-- **NVDA’s risk profile changed after 2020** — more volatile and more tightly correlated with the market
-
----
-
-## 🧪 Diagnostics
-
-### 🔹 Residual Checks (GARCH)
-
-- **Ljung-Box**: No significant autocorrelation in residuals  
-- **Jarque-Bera**: Rejected normality  
-- **ARCH LM**: No remaining ARCH effects after GARCH fitting  
-- **Nyblom Stability Test**:  
-  - GSPC model is borderline unstable (joint statistic = 8.6 > 1.6 critical)
-
-### 🔹 🔍 Sign Bias Test
-
-Helps detect **asymmetries** in volatility response to positive/negative returns.
-
-- **NVDA**:  
-  - All individual effects not significant  
-  - Joint effect: marginally significant (p = 0.08)  
-- **GSPC**:  
-  - Strong significance in overall test (p < 0.001)  
-  - Indicates **asymmetric volatility**, not fully captured by GARCH(1,1)
-
-📌 Suggestion: Future modeling can consider **EGARCH or GJR-GARCH** to model asymmetric volatility.
+🟥 **Red line** marks the start of the forecast horizon  
+🟦 **Flat lines** occur because **DCC-GARCH assumes no new shocks** beyond the current state, so forecasts revert to conditional means
 
 ---
 
 ## 🧾 Conclusion
 
-This project shows how dynamic GARCH-based modeling can reveal evolving relationships between assets.
+DCC-GARCH is an effective tool to study how asset volatility and correlation evolve over time.
 
-- NVDA became **increasingly correlated** with the market after 2020  
-- **DCC-GARCH** provided a powerful way to model time-varying volatility and co-movement  
-- **Model diagnostics** confirmed GARCH fit but pointed to asymmetries  
-- Forecasting revealed stable expectations for volatility/correlation unless new shocks arrive
+- NVDA has become **increasingly correlated** with the S&P 500 since 2020  
+- DCC-GARCH reveals **time-varying market exposure**  
+- While GARCH(1,1) models volatility well, diagnostics suggest asymmetry → future work could explore **EGARCH**  
+- This framework can support **risk management**, **portfolio optimization**, or **hedging strategies**
 
 ---
 
 ## 📁 Project Files
 
-- `S&P500_vs_NVDA.Rmd`: Full analysis  
-- `S&P500_NVDA.R`: Supporting scripts  
-- `readme_plots/`: Banner and forecast plots
+- `S&P500_vs_NVDA.Rmd`: Full report and analysis  
+- `S&P500_NVDA.R`: Support scripts  
+- `readme_plots/`: Banner and forecast plot
 
 ---
 
-📬 **Feel free to fork, clone, or star this repo!**  
-Let’s explore volatility together ✨
+📬 **Explore, fork, or contribute to this repo. Insights await in volatility.** 📉✨
+
 
 
 
