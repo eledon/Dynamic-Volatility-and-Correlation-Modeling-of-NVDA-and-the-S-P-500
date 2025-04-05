@@ -21,15 +21,15 @@ Modeling the time-varying volatility and conditional correlation between NVIDIA 
 - [Modeling](#modeling)
 - [Forecasting](#forecasting)
 - [Results](#results)
-- [Interpretation & Practical Use](#interpretation--practical-use)
-- [Conclusion](#conclusion)
+- [Sign Bias Test](#sign-bias-test)
+- [Practical Insights](#practical-insights)
 - [Project Files](#project-files)
 
 ---
 
 ## 🧭 Overview
 
-This project investigates how NVIDIA (NVDA) stock returns co-move with the S&P 500 index. Using log returns, we model conditional volatility with **univariate GARCH(1,1)** and estimate **dynamic conditional correlation** with the **DCC-GARCH** framework.
+This project investigates how NVIDIA stock returns co-move with the S&P 500 index. Using log returns, we model conditional volatility with **univariate GARCH(1,1)** and estimate time-varying correlation with the **DCC-GARCH model**.
 
 ---
 
@@ -57,20 +57,20 @@ This project investigates how NVIDIA (NVDA) stock returns co-move with the S&P 5
 
 ## 🔍 Exploratory Analysis
 
-- **Stationarity confirmed** via ADF and KPSS tests for log returns
-- **High volatility clustering** observed in NVDA compared to the S&P 500
-- **Rolling correlation structure** reveals **stable moderate correlation** before 2020, followed by more volatile and higher correlations after 2020
-- **ACF/PACF patterns** suggest autocorrelation in GSPC but not NVDA
-- NVDA shows signs of behavior shift around 2020—possibly tied to broader tech-sector momentum or pandemic-related volatility
+- **Stationarity**: Confirmed via ADF and KPSS tests  
+- **Volatility Clustering**: NVDA shows higher and more persistent volatility  
+- **Correlation Dynamics**: Rolling correlation is not constant — tends to rise after 2020  
+- **ACF/PACF**: S&P 500 exhibits more short-term autocorrelation structure than NVDA  
+- **Mean Comparison**: Returns are centered near zero, but NVDA has higher variation  
 
 ---
 
 ## ⚙️ Modeling
 
-- Univariate **GARCH(1,1)** models were fitted for both NVDA and GSPC
-- Joint modeling via **DCC-GARCH(1,1)** captures evolving co-movements
-- Model diagnostics confirm good fit: residuals pass Ljung-Box and ARCH tests
-- **Sign Bias Tests** were run to assess asymmetry and leverage effects
+- **Univariate GARCH(1,1)** fit to both assets captures volatility persistence  
+- **DCC-GARCH(1,1)** captures **time-varying conditional correlation**  
+- Residuals diagnostics (Ljung-Box, ARCH-LM, Jarque-Bera) support model adequacy  
+- NVDA α+β ≈ 0.957 and S&P 500 α+β ≈ 0.962 indicate strong volatility persistence
 
 ---
 
@@ -78,61 +78,69 @@ This project investigates how NVIDIA (NVDA) stock returns co-move with the S&P 5
 
 <img src="https://github.com/eledon/Dynamic-Volatility-and-Correlation-Modeling-of-NVDA-and-the-S-P-500/blob/main/readme_plots/DCC_GARCH_forecast.jpg" width="600"/>
 
-### 🔮 Forecast Explanation
+We produced **100-step-ahead forecasts** of conditional **covariance** and **correlation** between NVDA and the S&P 500.
 
-- The red **vertical line** separates observed data from **100-step-ahead forecasts**
-- The **blue horizontal line** shows the long-term average (mean) for comparison
-- The **flat line** behavior in the forecast occurs because the **DCC-GARCH model converges to a long-run conditional expectation** when no new data is available
-- This is typical and expected in models where the correlation process is mean-reverting and there's no additional shock data
+🔴 The **vertical red line** separates the in-sample period from the forecast horizon.
+
+- The flat pattern after the red line reflects how **GARCH/DCC models converge to their long-run expectations** once no new shocks are observed.
+- This is expected behavior and shows model stability rather than failure.
 
 ---
 
 ## ✅ Results
 
-- **High volatility persistence**:  
-  - NVDA: α + β = 0.957  
-  - GSPC: α + β = 0.962  
-- **Dynamic correlation** (DCC): α + β = 0.742  
-- **Pre-2020 correlation** was stable and moderate  
-- **Post-2020 correlation** surged and became more volatile  
-- **Forecasts** indicate that correlation is expected to stabilize again
+- **Volatility Persistence**:
+  - NVDA α + β = **0.957**
+  - S&P 500 α + β = **0.962**
+- **Dynamic Conditional Correlation (DCC)**: α + β = **0.742** → moderate responsiveness to past correlation shocks
+- **Average Correlation**: ≈ **0.57**, increasing **post-2020**, possibly due to increased tech-market linkage
+- **Forecast**: Suggests stable future volatility and correlation under current regime
 
 ---
 
-## 🧠 Interpretation & Practical Use
+## 📋 Sign Bias Test
 
-### 📊 Insights
+The **Sign Bias Test** examines whether **positive or negative shocks** impact volatility **asymmetrically** (a common feature in financial time series).
 
-- NVDA's behavior became **more correlated with the S&P 500 after 2020**, possibly due to macroeconomic or market structure changes
-- The increase in correlation **implies reduced diversification benefits** when holding NVDA and the S&P 500 together
-- Investors and analysts can use this modeling approach to **monitor risk exposure** and **adapt portfolio strategies** over time
+### NVDA
 
-### 🔧 Use Cases
+| Test Type         | t-Value | p-Value | Result          |
+|-------------------|---------|---------|-----------------|
+| Sign Bias         | 1.41    | 0.158   | ❌ Not significant |
+| Negative Sign Bias| 0.42    | 0.675   | ❌ Not significant |
+| Positive Sign Bias| 0.41    | 0.683   | ❌ Not significant |
+| Joint Effect      | 6.59    | 0.086   | ⚠️ Marginal (10%)  |
 
-- **Portfolio risk modeling**  
-- **Dynamic hedging strategies**  
-- **Monitoring time-varying exposure to market risk**
-- Can be extended to other tech stocks or ETF constituents
+🔹 Interpretation: No strong evidence of asymmetric volatility response in NVDA, though the **joint effect** suggests mild nonlinearity may exist.
+
+### S&P 500
+
+| Test Type         | t-Value | p-Value | Result          |
+|-------------------|---------|---------|-----------------|
+| Sign Bias         | 3.69    | 0.00023 | ✅ Significant   |
+| Negative Sign Bias| 0.31    | 0.756   | ❌ Not significant |
+| Positive Sign Bias| 0.18    | 0.858   | ❌ Not significant |
+| Joint Effect      | 23.55   | 0.00003 | ✅ Significant   |
+
+🔹 Interpretation: The **S&P 500 exhibits strong asymmetric effects**, where **negative shocks** increase volatility more than positive ones — a typical leverage effect.
 
 ---
 
-## 🧾 Conclusion
+## 💡 Practical Insights
 
-DCC-GARCH modeling captures how assets behave **not just individually (volatility)** but **together (correlation)**. NVDA's increasing alignment with the S&P 500 after 2020 is a valuable signal for:
-
-- Asset managers looking for diversification
-- Analysts exploring market regimes and tech-sector dynamics
-- Students and researchers interested in applied time series modeling
+- **Volatility Modeling** allows investors to understand the risk structure of NVDA and how it responds to market shocks.
+- The **correlation between NVDA and the market** (S&P 500) is **not constant** and has increased **notably after 2020** — possibly due to NVDA’s growing role in tech and AI.
+- **DCC-GARCH** helps in **portfolio risk management** by modeling co-movements over time.
+- The **forecast** component provides a foundation for **risk forecasting** in value-at-risk (VaR) or scenario simulation settings.
 
 ---
 
 ## 📁 Project Files
 
-- `S&P500_vs_NVDA.Rmd`: Full analysis  
+- `S&P500_vs_NVDA.Rmd`: Full analysis notebook  
 - `readme_plots/`: Forecast and banner images  
-- `S&P500_NVDA.R`: Supporting scripts and functions
+- `S&P500_NVDA.R`: Supporting scripts
 
 ---
 
-Feel free to ⭐ star, fork, or contribute!
 
