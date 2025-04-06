@@ -44,8 +44,7 @@ This project explores how NVIDIA’s stock returns relate to broader market move
 
 ## ❓ Research Question
 
-> How do volatility and correlation between NVDA and the S&P 500 evolve over time?
-> 
+> How do volatility and correlation between NVDA and the S&P 500 evolve over time?  
 > What model best captures these dynamics, and how persistent are volatility shocks and co-movements?
 
 ---
@@ -62,13 +61,13 @@ This project explores how NVIDIA’s stock returns relate to broader market move
 
 ## 🔍 Exploratory Analysis
 
-- **Stationarity**: ADF and KPSS confirm stationarity of both return series
-- **Normality**: Jarque-Bera tests reject normality for both
+- **Stationarity**: ADF and KPSS confirm stationarity of both return series  
+- **Normality**: Jarque-Bera tests reject normality for both  
 - **Autocorrelation**: ACF/PACF plots of squared returns suggest ARCH effects:
   - NVDA: spikes at lags 1, 7, 8  
-  - GSPC: spikes at lags 1–2, 4, 6–9
-- **ARCH LM Tests**: Significant for both assets (p < 0.001)
-- **Rolling Correlation**: Notable rise in correlation post-2020 — stronger market dependence
+  - GSPC: spikes at lags 1–2, 4, 6–9  
+- **ARCH LM Tests**: Significant for both assets (p < 0.001)  
+- **Rolling Correlation**: Notable rise in correlation post-2020 — stronger market dependence  
 
 ---
 
@@ -83,11 +82,11 @@ A high-order ARCH model is used as a starting point. Total ARCH effects:
 
 ✅ Captures volatility clustering  
 ❌ Lacks a GARCH term for persistence  
-❌ Many parameters → less interpretable
+❌ Many parameters → less interpretable  
 
 **Diagnostics**:
 - Residuals: no significant autocorrelation or remaining ARCH  
-- Normality: still rejected (JB test)
+- Normality: still rejected (JB test)  
 
 ---
 
@@ -96,12 +95,12 @@ A high-order ARCH model is used as a starting point. Total ARCH effects:
 We switch to GARCH(1,1) for simplicity and generalizability.
 
 - **NVDA**: α + β = 0.957  
-- **GSPC**: α + β = 0.962
+- **GSPC**: α + β = 0.962  
 
 ✅ Captures both short- and long-term volatility  
 ✅ Residuals pass Ljung-Box and ARCH-LM  
 ❌ Residuals still not normal  
-❌ GSPC: **Nyblom Test** indicates parameter instability
+❌ GSPC: **Nyblom Test** indicates parameter instability  
 
 **Sign Bias Test**:
 
@@ -120,11 +119,11 @@ A multivariate DCC-GARCH(1,1) model builds on the fitted univariate models.
 
 - **Average Correlation**: ≈ 0.57  
 - **DCC α + β**: 0.742 → correlation is persistent but mean-reverting  
-- **Post-2020**: correlation rises, showing tighter market linkage
+- **Post-2020**: correlation rises, showing tighter market linkage  
 
 ✅ Captures time-varying co-movement  
 ✅ Residuals stable  
-✅ Enables conditional forecast of correlation
+✅ Enables conditional forecast of correlation  
 
 ---
 
@@ -135,12 +134,12 @@ We apply an **Exponentially Weighted Moving Average (EWMA)** to returns:
 - **λ = 0.94**, consistent with RiskMetrics  
 - Covariance and correlation are smoother  
 - Mean correlation ≈ 0.58  
-- Similar post-2020 increase observed
+- Similar post-2020 increase observed  
 
 ✅ Non-parametric baseline  
 ✅ Easier to implement  
 ❌ No probabilistic interpretation  
-❌ No forecasting beyond current values
+❌ No forecasting beyond current values  
 
 ---
 
@@ -152,7 +151,7 @@ We apply an **Exponentially Weighted Moving Average (EWMA)** to returns:
 
 - 🔴 **Red line** = start of forecast horizon  
 - 🔵 **Flat forecast**: DCC-GARCH assumes no new information → forecasts revert to conditional mean  
-- Useful for short-term risk/portfolio forecasting
+- Useful for short-term risk/portfolio forecasting  
 
 ---
 
@@ -162,13 +161,13 @@ We apply an **Exponentially Weighted Moving Average (EWMA)** to returns:
 - **GARCH(1,1)** fits volatility clustering well, but GSPC may need EGARCH  
 - **DCC-GARCH(1,1)** effectively models evolving market co-movement  
 - **EWMA** offers a useful benchmark  
-- This framework can inform **portfolio risk, dynamic hedging, and beta estimation**
+- This framework can inform **risk management**, **portfolio optimization**, or **hedging strategies**
 
 ---
 
 ## 📁 Project Files
 
-- `S&P500_vs_NVDA.Rmd`: Full R Markdown notebook  
+- 📄 [Full Report](https://github.com/eledon/Dynamic-Volatility-and-Correlation-Modeling-of-NVDA-and-the-S-P-500/blob/main/S-P500_vs_NVDA_report.md)  
 - `S&P500_NVDA.R`: Supporting script  
 - `readme_plots/`: Forecast and banner images
 
