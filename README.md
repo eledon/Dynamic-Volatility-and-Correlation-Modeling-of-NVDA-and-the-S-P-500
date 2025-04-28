@@ -53,9 +53,9 @@ This project explores how NVIDIA’s stock returns relate to broader market move
 
 - **Source**: Yahoo Finance  
 - **Assets**: NVIDIA (NVDA), S&P 500 Index (^GSPC)  
-- **Period**: 2013–2024  
+- **Period**: 2013-2024  
 - **Frequency**: Daily  
-- **Variable**: Adjusted Closing Prices → Log Returns  
+- **Variable**: Adjusted Closing Prices -> Log Returns  
 
 ---
 
@@ -67,7 +67,7 @@ This project explores how NVIDIA’s stock returns relate to broader market move
   - NVDA: spikes at lags 1, 7, 8  
   - GSPC: spikes at lags 1–2, 4, 6–9  
 - **ARCH LM Tests**: Significant for both assets (p < 0.001)  
-- **Rolling Correlation**: Notable rise in correlation post-2020 — stronger market dependence  
+- **Rolling Correlation**: Notable rise in correlation post-2020 - stronger market dependence  
 
 ---
 
@@ -109,7 +109,7 @@ We switch to GARCH(1,1) for simplicity and generalizability.
 | Sign Bias        | p = 0.158 | p = 0.0002 |
 | Joint Effect     | p = 0.086 | p < 0.001  |
 
-→ Suggests **volatility asymmetry** for GSPC → EGARCH could be better.
+→ Suggests **volatility asymmetry** for GSPC -> EGARCH could be better.
 
 ---
 
@@ -118,7 +118,7 @@ We switch to GARCH(1,1) for simplicity and generalizability.
 A multivariate DCC-GARCH(1,1) model builds on the fitted univariate models.
 
 - **Average Correlation**: ≈ 0.57  
-- **DCC α + β**: 0.742 → correlation is persistent but mean-reverting  
+- **DCC α + β**: 0.742 -> correlation is persistent but mean-reverting  
 - **Post-2020**: correlation rises, showing tighter market linkage  
 
 ✅ Captures time-varying co-movement  
